@@ -19,8 +19,10 @@ library(maps)
 library(tidyverse)
 library(lubridate)
 
-#load data
-data <- read.csv("/Users/jasirrahman/Desktop/SOPA Capstone/R/Data/Weekly_Historical_Criminal_20241012.csv")
+# Load data
+# Note: Requires .txt file of data
+# Note: When running make sure that path for file is specific to your computer
+data <- read.delim("/Users/jasirrahman/Desktop/SOPA Capstone/R/Data/Weekly_Historical_Criminal_20241102.txt")
 
 bail <- subset(data, fda > 20140000)
 
