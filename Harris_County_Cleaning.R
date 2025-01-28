@@ -128,7 +128,6 @@ bail$defAge <- floor(bail$defAge)
 bail <- bail %>%
   mutate(
     curDegree = str_extract(curLevelDeg, "\\b[A-Z]+$"),
-    pastOffenseNum = row_number(),
     guiltyPlea = disposition %in% c('CONVICTION-PLEA OF GUILTY', 'GUILTY PLEA - JURY VERDICT', 
                                     'PROBATION-PLEA OF GUILTY', 'DEFERRED ADJUD OF GUILT'),
     bondDenied = bondException == "BOND DENIED"
@@ -147,5 +146,9 @@ bail <- bail %>%
   separate(defName, into = c("lastName", "firstMiddle"), sep = ", ") %>%
   separate(firstMiddle, into = c("firstName", "middleName"), extra = "merge", fill = "right")
 
-
-
+# Create past offense number variable
+# key: {firstName, lastName, defDOB}
+bail <- bail %>% 
+  group_by(firstName, lastName, defDOB) %>%  # Group by the key variables
+  mutate(pastOffenseNum = n()) %>%           # Count the number of rows in each group
+  ungroup()                                 # Ungroup to avoid affecting further operations
