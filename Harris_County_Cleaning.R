@@ -1,4 +1,4 @@
-#SOPA Inaugeral Data Cleaning
+#SOPA Inaugural Data Cleaning
 
 ##preliminary environment
 #clear environment
@@ -23,7 +23,7 @@ library(lubridate)
 # Note: Requires .txt file of data
 # Note: When running make sure that path for file is specific to your computer
 data <- read.delim("/Users/jasirrahman/Desktop/SOPA Capstone/R/Data/Weekly_Historical_Criminal_20241102.txt")
-
+# Subset "bail" as dataset where all observations take place between 2014-2024
 bail <- subset(data, fda > 20140000)
 
 #################### Converted Code ####################
@@ -53,9 +53,10 @@ bail <- bail %>%
 # Recode key columns
 bail <- bail %>%
   mutate(
-    courtDivInd = case_when(courtDivInd == 2 ~ "MISDEMEANOR",
-                            courtDivInd == 3 ~ "FELONY",
-                            TRUE ~ NA_character_),
+    # Changing courtDivInd variable to be string of type of crime
+    courtDivInd = case_when(courtDivInd == "002" ~ "MISDEMEANOR",
+                            courtDivInd == "003" ~ "FELONY"),
+    # Clarifying defRace classifications
     defRace = case_when(defRace == "A" ~ "ASIAN/PACIFIC ISLANDER",
                         defRace == "B" ~ "BLACK",
                         defRace == "I" ~ "NATIVE AMERICAN",
@@ -63,8 +64,10 @@ bail <- bail %>%
                         defRace == "U" ~ "UNKNOWN",
                         defRace == "W" ~ "WHITE",
                         TRUE ~ NA_character_),
-    defSex = ifelse(defSex %in% c(" ", "U"), NA, defSex),
-    defCitizen = ifelse(defCitizen %in% c("Y", "N"), defCitizen, NA)
+    # Clarify defSex variable (assign all "unknown"/unrecorded cases to "NA")
+    defSex = ifelse(defSex %in% c(" ", "","U"), NA, defSex),
+    # Apply "U" to values that are not "Y"/"N"
+    defCitizen = ifelse(defCitizen %in% c("Y", "N"), defCitizen, "U")
   )
 
 # Remove duplicates for same case/defendant
@@ -79,38 +82,47 @@ bail <- bail %>%
       str_detect(atyConnectionLit, "APPOINTED|PUBLIC|FOR DEFENDANT") ~ "Appointed",
       str_detect(atyConnectionLit, "HIRED") ~ "Hired",
       str_detect(atyConnectionLit, "TEMPORARY") ~ "Temporary",
-      TRUE ~ atyConnectionLit
-    )
+      TRUE ~ atyConnectionLit,
+      )
   )
+
+# Consolidate the "NA" Attorney 
+bail$atyConnectionLit = ifelse(bail$atyConnectionLit %in% c("Hired", "Appointed", "Temporary"), bail$atyConnectionLit, "NA")
 
 # Drop rows without 'sentence' and identify missing columns
 bail <- bail %>% filter(!is.na(sentence))
 bail_na <- colSums(is.na(bail)) / nrow(bail)
 bail_na[bail_na > 0.3]
 
-# Feature Engineering
-# Convert columns to appropriate types
+### Feature Engineering
+## Convert columns to appropriate types
+# assign categorical columns
 catcols <- c('courtDivInd', 'instrumentType', 'caseDisp', 'caseStatus', 'defStatus', 
              'curOffenseLit', 'curLevelDeg', 'docketType', 'nextAppearanceReason', 
              'defName', 'defRace', 'defSex', 'defCity', 'defState', 'atyName', 
              'atyConnectionLit', 'compAgency', 'offenseReportNum', 'disposition', 
              'sentence')
+# convert to characters
 bail[catcols] <- lapply(bail[catcols], as.character)
-
-intcols <- c('caseNum', 'court')
+# assign court as integer
+intcols <- c('court')
 bail[intcols] <- lapply(bail[intcols], as.integer)
 
+# more transformations
 bail <- bail %>%
   mutate(
-    bondAmt = as.numeric(bondAmt),
-    fileDate = ymd(fileDate),
-    defDOB = ymd(defDOB),
-    dispDate = ymd(dispDate),
-    defAge = as.numeric(difftime(dispDate, defDOB, units = "days")) / 365.25,
-    defAgeCategory = cut(defAge, breaks = c(0, 18, 21, 25, 35, 50, 65, 100),
+    bondAmt = as.numeric(bondAmt),    # make bondAmt numeric
+    fileDate = ymd(fileDate),    #convert fileDate to Date format
+    defDOB = ymd(defDOB),    #convert defDOB to Date format
+    dispDate = ymd(dispDate),    #convert dispDate to Date format
+    defAge = as.numeric(difftime(dispDate, defDOB, units = "days")) / 365.25,    #calculate defAge from Dates
+    defAgeCategory = cut(defAge, breaks = c(0, 18, 21, 25, 35, 50, 65, 100),    #assign defAgeCategory based on defAge
                          labels = c("0-18", "19-21", "22-25", "26-35", "36-50", "51-65", "66+"))
   ) %>%
-  filter(!is.na(defAge))
+  filter(!is.na(defAge))    #filter out those without defAge
+
+# round defAge down so not in decimal format
+bail$defAge <- floor(bail$defAge)
 
 # Create new charge degree variable
 bail <- bail %>%
@@ -134,32 +146,6 @@ bail <- bail %>%
 bail <- bail %>%
   separate(defName, into = c("lastName", "firstMiddle"), sep = ", ") %>%
   separate(firstMiddle, into = c("firstName", "middleName"), extra = "merge", fill = "right")
-
-# Extract sentence components
-bail <- bail %>%
-  mutate(
-    jail_time = case_when(str_detect(sentence, "LIFE") ~ "25 YEARS",
-                          str_detect(sentence, "HCJ|CONFINEMENT|TDC") ~ sentence,
-                          TRUE ~ "NO JAIL TIME"),
-    fine_amount = as.numeric(str_extract(sentence, "\\$\\d+")),
-    probation = str_extract(sentence, "PROBATION\\s.*")
-  )
-
-# Convert jail/probation time to days
-convert_to_days <- function(time_str) {
-  if (is.na(time_str)) return(0)
-  num <- as.numeric(str_extract(time_str, "\\d+"))
-  if (str_detect(time_str, "YEARS")) return(num * 365)
-  if (str_detect(time_str, "MONTHS")) return(num * 30)
-  if (str_detect(time_str, "DAYS")) return(num)
-  return(0)
-}
-
-bail <- bail %>%
-  mutate(
-    jail_days = sapply(jail_time, convert_to_days),
-    probation_days = sapply(probation, convert_to_days)
-  )
 
 
 
