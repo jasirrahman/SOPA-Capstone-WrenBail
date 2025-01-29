@@ -1,1 +1,3 @@
 # SOPA-Capstone-WrenBail
+
+The data is available at the following link: https://www.hcdistrictclerk.com/Common/e-services/PublicDatasets.aspx We use the "Weekly_Historical_Criminal" dataset, located at the bottom of the group of datasets labeled "Criminal." The data updates weekly and as such is named in the following format: "Weekly_Historical_Criminal_YYYYMMDD.zip" where "YYYYMMDD" corresponds to the Year (YYYY), Month (MM), and Day (MM) the data was last updated (typically updates on Sundays). Please use the .txt version of the dataset in the zip file.  The data is preprocessed in our code, but if desired a codebook is available at the Harris County Clerk's Office website (link above) under the name: "Crim Rec Layout-Data Dict.xlsx"
