@@ -9,13 +9,6 @@ setwd("/Users/jasirrahman/Desktop/SOPA Capstone/R/Code")
 library(tidyr)
 library(zoo)
 library(readxl)
-library(lubridate)
-library(ggplot2)
-library(scales)
-library(sp)
-library(cowplot)
-library(ggpubr)
-library(maps)
 library(tidyverse)
 library(lubridate)
 
@@ -152,3 +145,6 @@ bail <- bail %>%
   group_by(firstName, lastName, defDOB) %>%  # Group by the key variables
   mutate(pastOffenseNum = n()) %>%           # Count the number of rows in each group
   ungroup()                                 # Ungroup to avoid affecting further operations
+
+## Save as .RData file
+save(bail, file = "/Users/jasirrahman/Desktop/SOPA Capstone/R/Data/Harris_County_Cleaned.RData")
