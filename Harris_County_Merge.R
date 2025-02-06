@@ -104,7 +104,7 @@ bail_income <- bail_income %>%
     TRUE ~ "Very High"
   ))
 
-
+# we need to add unhoused categorization for the address of the Hope Center
 
 
 
