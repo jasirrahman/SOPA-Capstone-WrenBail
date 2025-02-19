@@ -99,6 +99,27 @@ bail_income <- bail_income %>%
     TRUE ~ "Very High"
   ))
 
+names(bail_income)
+
+### changed rows with blanks on Zip code to 00000
+
+library(dplyr)  
+
+bail_income <- bail_income %>%
+  mutate(defZIP = na_if(trimws(defZIP), ""),  
+         defZIP = ifelse(is.na(defZIP) & income_category == "Unhoused", "00000", defZIP))
+
+
+#checking for missing values
+
+bail_income %>%
+  summarise(
+    total_rows = n(),
+    missing_zip = sum(is.na(defZIP) | defZIP == ""),
+    non_missing_zip = sum(!is.na(defZIP) & defZIP != "")
+  )
+
+
 
 
 
