@@ -77,10 +77,7 @@ bail_income <- bail_income %>%
 
 names(bail_income)
 
-###### Create a smaller dataset with the dropped variables (optional to look at other income details)
-#bail_income_details <- bail_income %>%
-  #select(caseNum, defZIP, year, median_income, harris_median_income, 
-         #low_income_threshold, moderate_income_threshold, high_income_threshold)
+
 
 # Create a new version of bail_income without other income details but keep income_category)
 bail_income <- bail_income %>%
@@ -88,9 +85,33 @@ bail_income <- bail_income %>%
          -moderate_income_threshold, -high_income_threshold)
 
 
-# Save both datasets
-save(bail_income, file = "Harris_County_Cleaned_Small.RData") 
-
-
-# Check structure of both datasets
+# Check structure of  datasets
 str(bail_income)
+
+
+# Change rows with blanks in Zip code to 00000, keeping income_category intact
+bail_income <- bail_income %>%
+  mutate(defZIP = na_if(trimws(defZIP), ""),
+         defZIP = ifelse(is.na(defZIP) & income_category == "Unhoused", "00000", defZIP))
+
+# Check structure of the updated dataset
+str(bail_income)
+
+# Check for missing values and validate the changes
+bail_income %>%
+  summarise(
+    total_rows = n(),
+    missing_zip = sum(is.na(defZIP) | defZIP == ""),
+    non_missing_zip = sum(!is.na(defZIP) & defZIP != "")
+  )
+
+
+
+# Save datasets
+#save(bail_income, file = "Harris_County_Cleaned_Small.RData") 
+
+
+
+
+
+
