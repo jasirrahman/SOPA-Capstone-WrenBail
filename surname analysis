@@ -1,0 +1,62 @@
+rm(list=ls())
+
+getwd()
+setwd(file.path(Sys.getenv("basmabedawi"),"/Users/basmabedawi/Downloads/"))
+
+load("Harris_County_Merged.RData")
+
+data <- bail_income
+
+names(data)[names(data) == "defState"] <- "state"
+
+library(wru)
+library(stringr)
+library(tidycensus)
+
+data$surname <- word(data$lastName,-1)
+data$surname <- str_remove(data$surname, "\\.")
+data$id <- c(1:nrow(data))
+
+df <- data.frame(id = 1:499728, surname = data$surname)
+surnames <- df$surname
+
+voter.file <- data.frame(state = c("TX"), surname = surnames)
+names(voter.file)[names(voter.file) == "defState"] <- "state"
+voter.file$state <- rep("TX")
+voter.file$county <- rep("201")
+voter.file$id <- c(1:nrow(voter.file))
+
+names(voter.file)[2]
+
+str(voter.file)
+
+Sys.setenv(CENSUS_API_KEY = "ac734a8f461d23ee33dfd579694105dd573bd08e")
+
+Sys.getenv("CENSUS_API_KEY")
+
+get_census_data(
+  key = Sys.getenv("CENSUS_API_KEY"),
+  states = c("TX"),
+  age = FALSE,
+  sex = FALSE,
+  year = "2020",
+  census.geo = "county",
+  retry = 3,
+  county.list = c("Harris"))
+
+
+predictions <- predict_race(voter.file = voter.file, census.geo = "county") 
+save(predictions, file = "predictions.RData")
+
+
+library(dplyr)
+race <- predictions %>%
+  mutate(race = case_when(
+    pred.whi == pmax(pred.whi, pred.bla, pred.his, pred.asi, pred.oth) ~ "W",
+    pred.bla == pmax(pred.whi, pred.bla, pred.his, pred.asi, pred.oth) ~ "B",
+    pred.his == pmax(pred.whi, pred.bla, pred.his, pred.asi, pred.oth) ~ "H",
+    pred.asi == pmax(pred.whi, pred.bla, pred.his, pred.asi, pred.oth) ~ "A",
+    pred.oth == pmax(pred.whi, pred.bla, pred.his, pred.asi, pred.oth) ~ "O"
+  ))
+
+save(predictions, file = "Race.RData")
