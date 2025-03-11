@@ -1,0 +1,18 @@
+rm(list=ls())
+
+getwd()
+setwd(file.path(Sys.getenv("basmabedawi"),"/Users/basmabedawi/Downloads/"))
+
+load("Harris_County_Mergev2.RData")
+
+data <- bail_income
+
+data$income_category <- factor(data$income_category)
+levels(data$income_category)
+data$income_category <- relevel(data$income_category, ref = "Moderate")
+
+prelim <- lm(bondAmt~income_category, data = data)
+summary(prelim)
+
+prelimc <- lm(bondAmt~income_category + race + priorOffenseNum + defSex + atyConnectionLit + chargeLevel, data = data)
+summary(prelimc)
