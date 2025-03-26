@@ -7,13 +7,14 @@ load("Harris_County_Cleaned.RData")
 
 ls()
 
-names(bail)  
+#check names of columns
+names(bail)
 
-
-
+# load packages
 library(tidycensus)
 library(dplyr)
 library(tidyr)
+library(lubridate)
 
 # years to include (2014-2023)
 years <- c(2014:2023)
