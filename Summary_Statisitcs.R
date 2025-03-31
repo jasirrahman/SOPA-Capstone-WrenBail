@@ -81,18 +81,43 @@ summary(model_check)
 
 
 #Summary statistics
-  
+ # general 
 # bond amounts before reform
   summary(preReform$bondAmt)
 
 # bond amounts after reform
 summary(postReform$bondAmt)
 
-# for bond amounts by income category
-aggregate(bondAmt ~ income_category, data = bail_income, summary)
-
 # for bond amounts by misdemeanors vs felonies
 aggregate(bondAmt ~ courtDivInd, data = bail_income, summary)
+
+
+
+######misdemeanors
+# Summary statistics for bond amounts before the reform for misdemeanors
+summary(premis$bondAmt)
+
+
+# Summary statistics for bond amounts after the reform for misdemeanors
+summary(postmis$bondAmt)
+
+
+# by income category for misdemeanors only (pre-reform)
+aggregate(bondAmt ~ income_category, 
+          data = subset(preReform, courtDivInd == "MISDEMEANOR"), 
+          summary)
+#by income category for misdemeanors only (post-reform)
+aggregate(bondAmt ~ income_category, 
+          data = subset(postReform, courtDivInd == "MISDEMEANOR"), 
+          summary)
+
+
+#### felonies
+summary(prefel$bondAmt)
+
+summary(postfel$bondAmt)
+
+
 
 
 
