@@ -2,28 +2,38 @@
 rm(list = ls())
 
 # set and get wd
-setwd("C:/Users/viswa/Downloads")
+setwd("/Users/jasirrahman/Desktop/SOPA Capstone/R/Code")
 getwd()
 
 # load datasets
-load("Bail Income.RData")
+load("/Users/jasirrahman/Desktop/SOPA Capstone/R/Data/Harris_County_Merge_v2.RData")
+
+# load packages
+library(tidyr)
+library(dplyr)
+library(broom)
+library(stargazer)
 
 # set reference level
 bail_income$income_category <- factor(bail_income$income_category)
 levels(bail_income$income_category)
 bail_income$income_category <- relevel(bail_income$income_category, ref = "Moderate")
 
-# not sure what this code exactly does
+# changes "NA" strings to NAs
 bail_income$atyConnectionLit <- replace(bail_income$atyConnectionLit, bail_income$atyConnectionLit == "NA", NA)
 
 # linear regression (base findings off of this one)
-model1 <- lm(bondAmt ~ income_category*courtDivInd + race + defSex + atyConnectionLit + priorOffenseNum + chargeDegree, data = bail_income)
-summary(model1)
-
-# load packages
-library(tidyr)
-library(dplyr)
-library(broom)
+model1 <- lm(bondAmt ~ income_category*courtDivInd + defRace + defSex + atyConnectionLit + priorOffenseNum + chargeDegree, data = bail_income)
+print(summary(model1))
+stargazer(model1, type='html', digits = 2, title = 'Model of Bail Amounts by Income, Selected Covariates', 
+          covariate.labels = c('Income Category: High', 'Income Category: Low', 'Unhoused', 'Income Category: Very High',
+                               'Charge Type: Misdemeanor', 'Defendant Race: Black', 'Defendant Race: Native American', 
+                               'Defendant Race: Unkown', 'Defendant Race: White', 'Defendant Sex: Male', 'Attorney Connection: Hired',
+                               'Attorney Connection: Temporary Counsel', 'Prior Offense Number', 'Charge Degree: B', 'Charge Degree: C',
+                               'Charge Degree: S', 'Interaction: High Income Misdemeanant', 'Interaction: Low Income Misdemeanant', 
+                               'Interaction: Unhoused Misdemeanant', 'Interaction: Very High Income Misdemeanant'),
+          dep.var.labels = 'Bail Amount',
+          style = 'qje', out = 'Lm_1.html')
 
 # create different datasets (Jasir's Code)
 preReform <- bail_income %>% 
